@@ -16,6 +16,30 @@ class Settings:
     # Database
     DATABASE_URL: str = os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'hackradar.db'}")
 
+    @property
+    def normalized_database_url(self) -> str:
+        """
+        Normalize DATABASE_URL for SQLAlchemy 2.0+ and psycopg3:
+        Converts 'postgres://' or 'postgresql://' to 'postgresql+psycopg://'.
+        """
+        raw = self.DATABASE_URL.strip()
+        if raw.startswith("postgres://"):
+            return "postgresql+psycopg://" + raw[len("postgres://"):]
+        if raw.startswith("postgresql://") and not raw.startswith("postgresql+"):
+            return "postgresql+psycopg://" + raw[len("postgresql://"):]
+        return raw
+
+    @property
+    def masked_database_url(self) -> str:
+        """Mask credentials for safe logging"""
+        url = self.normalized_database_url
+        if "@" in url and "://" in url:
+            prefix, rest = url.split("://", 1)
+            creds, host_part = rest.split("@", 1)
+            user = creds.split(":", 1)[0] if ":" in creds else creds
+            return f"{prefix}://{user}:***@{host_part}"
+        return url
+
     # Telegram
     TELEGRAM_BOT_TOKEN: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
     TELEGRAM_CHAT_ID: str = os.getenv("TELEGRAM_CHAT_ID", "")

@@ -1,13 +1,10 @@
-name: HackRadar Hackathon Monitor
+name: HackRadar Scheduled Monitor
 
 on:
   schedule:
     # Run every 30 minutes
     - cron: "*/30 * * * *"
   workflow_dispatch:
-
-permissions:
-  contents: write
 
 concurrency:
   group: hackradar-monitor
@@ -32,25 +29,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run HackRadar Monitor
+      - name: Run HackRadar Discovery Monitor
         env:
+          # Production PostgreSQL database (Supabase / Neon / Railway)
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          # Telegram Bot credentials
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          DATABASE_URL: sqlite:///hackradar.db
         run: |
           python -m app.monitor
-
-      - name: Persist SQLite Database & State
-        run: |
-          git config user.name "HackRadar Monitor Bot"
-          git config user.email "hackradar-bot@users.noreply.github.com"
-
-          # Stage database and tracked files
-          git add hackradar.db known_workshops.json
-
-          if git diff --cached --quiet; then
-            echo "No database changes to commit."
-          else
-            git commit -m "chore(db): update HackRadar discovered events state [skip ci]"
-            git push
-          fi

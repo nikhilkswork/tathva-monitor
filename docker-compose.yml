@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: hackradar-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hackradar
+      POSTGRES_USER: hackradar_user
+      POSTGRES_PASSWORD: hackradar_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hackradar_user -d hackradar"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    container_name: hackradar-web
+    restart: unless-stopped
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    environment:
+      - DATABASE_URL=postgresql+psycopg://hackradar_user:hackradar_password@postgres:5432/hackradar
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  bot-worker:
+    build: .
+    container_name: hackradar-bot-worker
+    restart: always
+    command: python -m app.bot.runner
+    environment:
+      - DATABASE_URL=postgresql+psycopg://hackradar_user:hackradar_password@postgres:5432/hackradar
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
