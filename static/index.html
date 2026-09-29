@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HackRadar — Real-Time Hackathon Discovery & Alert Platform</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%3E<text y=%2220%22 font-size=%2220%22>🚨</text></svg>">
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="logo-area">
+      <span class="logo-icon">🚨</span>
+      <div class="logo-text">
+        <h1>HackRadar</h1>
+        <span>Real-Time Hackathon Discovery & Telegram Alert System</span>
+      </div>
+    </div>
+
+    <nav>
+      <button class="nav-btn active" data-tab="dashboard">Dashboard</button>
+      <button class="nav-btn" data-tab="events">Events</button>
+      <button class="nav-btn" data-tab="sources">Sources</button>
+      <button class="nav-btn" data-tab="logs">Runs & Logs</button>
+    </nav>
+
+    <div class="header-actions">
+      <button class="btn btn-secondary btn-sm" id="btn-theme-toggle">🌓 Theme</button>
+      <button class="btn btn-sm" id="btn-trigger-monitor">⚡ Run Monitor</button>
+      <button class="btn btn-secondary btn-sm" id="btn-test-notif">💬 Test Telegram</button>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main>
+
+    <!-- TAB 1: DASHBOARD -->
+    <section id="tab-dashboard" class="tab-pane active">
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-label">Total Events Tracked</span>
+          <span class="stat-value" id="stat-total-events">0</span>
+          <span class="stat-sub">Across all sources</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Discovered Today</span>
+          <span class="stat-value" id="stat-new-today" style="color: var(--accent);">0</span>
+          <span class="stat-sub">Past 24 hours</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Active Sources</span>
+          <span class="stat-value" id="stat-active-sources">0</span>
+          <span class="stat-sub" id="stat-failed-sources">0 errors</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Telegram Users</span>
+          <span class="stat-value" id="stat-total-users">0</span>
+          <span class="stat-sub">Subscribers</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Alerts Sent</span>
+          <span class="stat-value" id="stat-total-notifs">0</span>
+          <span class="stat-sub">Telegram deliveries</span>
+        </div>
+      </div>
+
+      <!-- Recent Discoveries Card -->
+      <div class="section-card">
+        <div class="section-header">
+          <h2 class="section-title">🔥 Recent Hackathons Discovered</h2>
+          <button class="btn btn-secondary btn-sm" onclick="switchTab('events')">View All &rarr;</button>
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Source</th>
+                <th>Location</th>
+                <th>Prize Pool</th>
+                <th>Registration Deadline</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="recent-events-table">
+              <tr><td colspan="6" style="text-align:center;">Loading events...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Monitored Sources Health Overview -->
+      <div class="section-card">
+        <div class="section-header">
+          <h2 class="section-title">📡 Trusted Sources Overview</h2>
+          <button class="btn btn-secondary btn-sm" onclick="switchTab('sources')">Manage Sources &rarr;</button>
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Source</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Discovered</th>
+                <th>Last Checked</th>
+              </tr>
+            </thead>
+            <tbody id="dashboard-sources-table">
+              <tr><td colspan="5" style="text-align:center;">Loading sources...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: EVENTS -->
+    <section id="tab-events" class="tab-pane">
+      <div class="section-card">
+        <div class="section-header">
+          <h2 class="section-title">Explore Hackathons</h2>
+          <span id="events-count-label" style="font-size: 0.875rem; color: var(--text-muted);">Showing 0 events</span>
+        </div>
+
+        <div class="filters-bar">
+          <input type="text" id="event-search-input" class="search-input" placeholder="Search by title, organizer, location, or tag...">
+          <select id="event-source-filter" class="select-input">
+            <option value="">All Sources</option>
+            <option value="devfolio">Devfolio</option>
+            <option value="unstop">Unstop</option>
+            <option value="devpost">Devpost</option>
+            <option value="mlh">MLH</option>
+            <option value="tathva">Tathva</option>
+            <option value="generic">Generic</option>
+          </select>
+          <select id="event-mode-filter" class="select-input">
+            <option value="">All Modes</option>
+            <option value="online">Online</option>
+            <option value="offline">Offline / In-Person</option>
+            <option value="hybrid">Hybrid</option>
+          </select>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Hackathon</th>
+                <th>Source</th>
+                <th>Location / Mode</th>
+                <th>Dates</th>
+                <th>Prize Pool</th>
+                <th>Status</th>
+                <th>Links</th>
+              </tr>
+            </thead>
+            <tbody id="all-events-table">
+              <tr><td colspan="7" style="text-align:center;">Loading events...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: SOURCES -->
+    <section id="tab-sources" class="tab-pane">
+      <div class="section-card">
+        <div class="section-header">
+          <h2 class="section-title">Trusted Source Registry</h2>
+          <span style="font-size: 0.8125rem; color: var(--text-muted);">Adapters with isolated error handling</span>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Source</th>
+                <th>Endpoint / Base URL</th>
+                <th>Type</th>
+                <th>Health Status</th>
+                <th>Discovered</th>
+                <th>Last Success</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="full-sources-table">
+              <tr><td colspan="7" style="text-align:center;">Loading sources...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: RUNS & LOGS -->
+    <section id="tab-logs" class="tab-pane">
+      <div class="section-card">
+        <div class="section-header">
+          <h2 class="section-title">Monitoring Run History</h2>
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Run Time (UTC)</th>
+                <th>Status</th>
+                <th>Sources Checked</th>
+                <th>Events Found</th>
+                <th>New Events</th>
+                <th>Alerts Sent</th>
+              </tr>
+            </thead>
+            <tbody id="monitor-runs-table">
+              <tr><td colspan="6" style="text-align:center;">Loading run history...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-header">
+          <h2 class="section-title">System Error Logs</h2>
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Time (UTC)</th>
+                <th>Source</th>
+                <th>Component</th>
+                <th>Error Type</th>
+                <th>Message</th>
+              </tr>
+            </thead>
+            <tbody id="error-logs-table">
+              <tr><td colspan="5" style="text-align:center;">Loading logs...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Event Details Modal -->
+  <div class="modal" id="event-modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+      <h3 id="modal-title" style="margin-bottom: 0.75rem; font-size: 1.25rem;">Event Title</h3>
+      <div id="modal-body" style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.6;">
+        <!-- Details injected dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p><strong>HackRadar</strong> &bull; Free, Real-Time Hackathon Discovery & Alert System &bull; <a href="/docs" target="_blank" style="color: var(--primary);">Swagger API Docs</a></p>
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
